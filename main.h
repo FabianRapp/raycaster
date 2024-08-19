@@ -8,6 +8,23 @@
 # include "./MLX42/include/MLX42/MLX42_Int.h"
 # include "./libft/libft.h"
 
+#define BLACK 0xFF000000
+#define RED 0xFF0000FF
+#define GREEN 0xFF00FF00
+#define BLUE 0xFFFF0000
+#define MAGENTA 0xFFFF00FF
+#define YELLOW 0xFF00FFFF
+#define WHITE 0xFFFFFFFF
+#define CYAN 0xFF00FFFF
+#define PURPLE 0xFFFF00A0
+#define ORANGE 0xFF0080FF
+#define TEAL 0xFF808000
+#define PINK 0xFFFF80FF
+#define LIME 0xFF80FF00
+#define LIGHT_GREY 0xFFD3D3D3
+#define DARK_GREY 0xFFA9A9A9
+
+
 # define CUBE_SIZE 64
 # define PLAYER_HEIGHT 32
 
@@ -20,16 +37,16 @@
 
 typedef struct s_player
 {
-	double		x;
-	double		y;
-	double		direct;
+	double		x;//in units
+	double		y;//in units
+	double		direct;//in rad
 }	t_player;
 
 typedef struct s_world
 {
 	t_player		player;
-	uint16_t		x_size;
-	uint16_t		y_size;
+	uint16_t		x_size;//in cubes
+	uint16_t		y_size;//in cubes
 	char			**map;
 }	t_world;
 
