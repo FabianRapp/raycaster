@@ -74,7 +74,11 @@ void	project(t_main *main_data)
 	const t_world		world = main_data->world;
 	t_ray				ray;
 
-	ray.direct = world.player.direct - (FOV / 2);
+	ray.direct = world.player.direct + (FOV / 2);
+	//if (ray.direct < 0)
+	//	ray.direct = 2 * M_PI + ray.direct;
+	//if (ray.direct > 2 * M_PI)
+	//	ray.direct = ray.direct - 2 * M_PI;
 	ray.x = world.player.x;
 	ray.y = world.player.y;
 	ray_index = 0;
@@ -83,13 +87,14 @@ void	project(t_main *main_data)
 
 	while (ray_index < WIDTH)
 	{
-		if (ray.direct < 0)
-			ray.direct = 2 * M_PI + ray.direct;
-		if (ray.direct > 2 * M_PI)
-			ray.direct = ray.direct - 2 * M_PI;
+		//if (ray.direct < 0)
+		//	ray.direct = 2 * M_PI + ray.direct;
+		//if (ray.direct > 2 * M_PI)
+		//	ray.direct = ray.direct - 2 * M_PI;
 		ray.vec_x = cos(ray.direct);
-		ray.vec_y = sin(ray.direct);
-		assert(ray.direct >= 0 && ray.direct < 2 * M_PI);
+		ray.vec_y = -1 * sin(ray.direct);
+		//printf("direct: %lf; vec_x: %lf; vec_y: %lf\n", ray.direct, ray.vec_x, ray.vec_y);
+		//assert(ray.direct >= 0 && ray.direct < 2 * M_PI);
 		double ray_len = sqrt(ray.vec_x * ray.vec_x + ray.vec_y * ray.vec_y);
 		if (ray_len < 0.98 || ray_len > 1.02)
 		{
@@ -103,7 +108,7 @@ void	project(t_main *main_data)
 			//ft_printf("found_wall %d after %d\n", ray_index, dist);
 			draw_ray(main_data, dist, ray_index, side);
 		}
-		ray.direct += ANGLE_PER_RAY;
+		ray.direct -= ANGLE_PER_RAY;
 		ray_index++;
 	}
 }
