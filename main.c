@@ -23,10 +23,21 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 	static int	ac = 0;
 	static int  bc = 0;
 	uint32_t	side;
-	while (!world.map[world.y_size - (int)(ray.y) - 1][(int)roundf(ray.x)])
+	ray.x *= CUBE_SIZE;
+	ray.y *= CUBE_SIZE;
+	int	next_x;
+	int	next_y;
+	while (!world.map[(int)(ray.y / CUBE_SIZE)][(int)(ray.x / CUBE_SIZE)])
 	{
-		double a = (ray.x + direct_x - ray.x) / ray.vec_x;
-		double b = (ray.y + direct_y - ray.y) / ray.vec_y;
+		// ray.x + a * ray.vec_x = ray.x + direct_x
+		// ray.x + a * ray.vec_x = next_x
+		// a = (next_x - ray.x ) / ray.vec_x
+		next_x = (int)(ray.x + direct_x);
+		next_y = (int)(ray.y + direct_y);
+		//double a = (ray.x + direct_x - ray.x) / ray.vec_x;
+		double a = (next_x - ray.x ) / ray.vec_x;
+		double b = (next_y - ray.y ) / ray.vec_y;
+		//double b = (ray.y + direct_y - ray.y) / ray.vec_y;
 		if (a < b)
 		{
 			ac++;
@@ -55,7 +66,8 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 
 void	draw_ray(t_main *main_data, double wall_dist, int x, uint32_t side)
 {
-	int projected_size = 1 / wall_dist * Z_NEAR;
+	//int projected_size = 1 / wall_dist * Z_NEAR;
+	int projected_size = CUBE_SIZE / wall_dist * Z_NEAR;
 
 	if (projected_size >= HEIGHT)
 	{
