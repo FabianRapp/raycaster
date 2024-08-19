@@ -46,8 +46,8 @@ void	parser(t_main *main_data, int ac, char *av[])
 	world = &main_data->world;
 	//world->x_size = 512;
 	//world->y_size = 512;
-	world->x_size = 8;
-	world->y_size = 8;
+	world->x_size = 16;
+	world->y_size = 16;
 
 	world->map = ft_calloc(sizeof(char *), world->y_size + 1);
 	if (!world->map)
@@ -74,8 +74,8 @@ void	parser(t_main *main_data, int ac, char *av[])
 	{
 		for (int x = 1; x < world->x_size - 1; x++)
 		{
-			//if (!(x % 5))
-			//	world->map[y][x] = 1;
+			if (!(x % 5))
+				world->map[y][x] = 1;
 		}
 	}
 }

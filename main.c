@@ -25,36 +25,69 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 	uint32_t	side;
 	ray.x *= CUBE_SIZE;
 	ray.y *= CUBE_SIZE;
-	int	next_x;
-	int	next_y;
-	while (!world.map[(int)(ray.y / CUBE_SIZE)][(int)(ray.x / CUBE_SIZE)])
+	int	next_x = (int)(ray.x + direct_x);
+	int	next_y = (int)(ray.y + direct_y);
+	double a = (next_x - ray.x ) / ray.vec_x;
+	double b = (next_y - ray.y ) / ray.vec_y;
+	if (a < b)
+	{
+		ray.y += ray.vec_y * a;
+	}
+	else
+	{
+		ray.x += ray.vec_x * b;
+	}
+	//todo:
+	//why do i need to add +1 to both indexes?
+	//can this segfault
+	//behaivior without the +1s:
+	/*
+		YELLO(-y)
+PINK(-x)		RED(+x)
+		GREEN(+y)
+	*/
+	// red-yellow buggy(now good)
+	// yello-pink clear cut bug (look like off by 1)
+	// pink-green buggy
+	// green-red good
+	while (!world.map[(int)(ray.y / CUBE_SIZE) + 1][(int)(ray.x / CUBE_SIZE) + 1])
 	{
 		// ray.x + a * ray.vec_x = ray.x + direct_x
 		// ray.x + a * ray.vec_x = next_x
 		// a = (next_x - ray.x ) / ray.vec_x
-		next_x = (int)(ray.x + direct_x);
-		next_y = (int)(ray.y + direct_y);
 		//double a = (ray.x + direct_x - ray.x) / ray.vec_x;
-		double a = (next_x - ray.x ) / ray.vec_x;
-		double b = (next_y - ray.y ) / ray.vec_y;
+		a = (next_x - ray.x ) / ray.vec_x;
+		b = (next_y - ray.y ) / ray.vec_y;
 		//double b = (ray.y + direct_y - ray.y) / ray.vec_y;
 		if (a < b)
 		{
 			ac++;
-			ray.x += ray.vec_x * a;
+			//ray.x += ray.vec_x * a;
+			ray.x = next_x;
 			ray.y += ray.vec_y * a;
 			*ret_dist += a;
 			side = RED;
 		}
-		else
+		else if (a > b)
 		{
 			bc++;
 			ray.x += ray.vec_x * b;
-			ray.y += ray.vec_y * b;
+			ray.y = next_y;
+			//ray.y += ray.vec_y * b;
 			*ret_dist += b;
 			side = GREEN;
 		}
+		else
+		{
+			side = BLUE;
+			ray.x += ray.vec_x * b;
+			ray.y += ray.vec_y * b;
+			*ret_dist += b;
+		}
+		next_x = (int)(ray.x + direct_x);
+		next_y = (int)(ray.y + direct_y);
 	}
+
 	if (side == RED && direct_x < 0)
 		side = PINK;
 	if (side == GREEN && direct_y < 0)
