@@ -1,5 +1,5 @@
 CC= cc
-FLAGS_SPEED = -Wall -Wextra -fsanitize=address -g 
+FLAGS_SPEED = -Wall -Wextra -fsanitize=address -g -O0
 # -Ofast -march=native -flto
 
 #
@@ -7,7 +7,7 @@ FLAGS_SPEED = -Wall -Wextra -fsanitize=address -g
 CFLAGS= $(FLAGS_SPEED)
 #-Wextra -Wall -Werror
 LIBFT 	=	libft/libft.a
-INCLUDES=-I./includes -I./MLX42/include/MLX42
+INCLUDES=-I./includes -I./MLX42/include/MLX42 -I./MLX42/include
 MLX=MLX42/build/libmlx42.a
 MLX_FLAGS_LINUX=-Iinclude -ldl -lglfw -pthread -lm
 MLX_FLAGS_MAC= -framework Cocoa $(MLX) -framework OpenGL -framework IOKit -Iinclude -lglfw
@@ -23,10 +23,14 @@ endif
 
 NAME=cub3D
 SOURCES= \
-	main.c 
+	main.c \
+	exit.c \
+	parser.c \
+	init/init.c
 
+VPATH = includes:MLX42/include/MLX42/:utils:utils/fixed_point:obj_parser:matrix:menu:init
 
-OBJ_DIR=o_files/
+OBJ_DIR = o_files/
 #OBJECTS=$(SOURCES:.c=.o)
 TMP=$(notdir $(SOURCES))
 OBJECTS=$(TMP:%.c=$(OBJ_DIR)%.o)
