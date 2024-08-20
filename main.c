@@ -33,7 +33,7 @@ void	ray_wall_intersection_new(t_ray ray, double *ret_dist, t_world world, uint3
 	}
 	else
 	{
-		next_x = ((int)ray.x) / CUBE_SIZE + 1;
+		next_x = ((int)ray.x) / CUBE_SIZE ;
 	}
 	if (direct_y < 0)
 	{
@@ -41,16 +41,16 @@ void	ray_wall_intersection_new(t_ray ray, double *ret_dist, t_world world, uint3
 	}
 	else
 	{
-		next_y = ((int)ray.y) / CUBE_SIZE + 1;
+		next_y = ((int)ray.y) / CUBE_SIZE ;
 	}
 	double	a;
 	double	b;
 
-	a = (next_x * CUBE_SIZE - ray.x) / ray.vec_x;
-	b = (next_y * CUBE_SIZE - ray.y) / ray.vec_y;
 	//printf("a: %lf; b: %lf\n", a, b);
 	while (!world.map[next_y][next_x])
 	{
+		a = (next_x * CUBE_SIZE - ray.x) / ray.vec_x;
+		b = (next_y * CUBE_SIZE - ray.y) / ray.vec_y;
 		if (a < b)
 		{
 			next_x += direct_x;
@@ -59,8 +59,8 @@ void	ray_wall_intersection_new(t_ray ray, double *ret_dist, t_world world, uint3
 		{
 			next_y += direct_y;
 		}
-		a = (next_x * CUBE_SIZE - ray.x) / ray.vec_x;
-		b = (next_y * CUBE_SIZE - ray.y) / ray.vec_y;
+		//a = (next_x * CUBE_SIZE - ray.x) / ray.vec_x;
+		//b = (next_y * CUBE_SIZE - ray.y) / ray.vec_y;
 	}
 	if (a < b)
 	{
