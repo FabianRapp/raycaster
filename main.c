@@ -1,76 +1,80 @@
 
 #include "main.h"
 
+#define EPSILON 1e-9
+
 typedef struct s_ray
 {
-	double	direct;
-	double	vec_x;
-	double	vec_y;
-	double	x;
-	double	y;
+	double	direct;//direction in rad
+	double	vec_x;//direction as 2d unit vec
+	double	vec_y;//diretion as 2d unit vec
+	int		x;
+	int		y;
 }	t_ray;
 
-//naive, slow and prob wrong
 void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
 {
 	*ret_dist = 0;
-	int	direct_x = 1;
-	int	direct_y = 1;
+
+	int	direct_x = CUBE_SIZE;
+	int	direct_y = CUBE_SIZE;
 	if (ray.vec_x < 0)
-		direct_x = -1;
+		direct_x *= -1;
 	if (ray.vec_y < 0)
-		direct_y = -1;
-	static int	ac = 0;
-	static int  bc = 0;
-	uint32_t	side;
-	ray.x *= CUBE_SIZE;
-	ray.y *= CUBE_SIZE;
-	int	next_x = (int)(ray.x + direct_x);
-	int	next_y = (int)(ray.y + direct_y);
+		direct_y *= -1;
+
+	uint32_t	side = 0;
+	//while (((int)ray.x) % CUBE_SIZE || ((int)ray.y) % CUBE_SIZE)
+	//{
+	//	ray.x += ray.vec_x;
+	//	ray.y += ray.vec_y;
+	//	*ret_dist += 1;
+	//}
+
+	double	next_x = (ray.x + direct_x);
+	double	next_y = (ray.y + direct_y);
+	//if (direct_x > 0)
+	//	next_x = ray.x + CUBE_SIZE - (ray.x % CUBE_SIZE);
+	//else
+	//	next_x = ray.x - (ray.x % CUBE_SIZE);
+	//if (direct_y > 0)
+	//	next_y = ray.y - (ray.y % CUBE_SIZE);
+	//else
+	//	next_y = ray.y - (ray.y % CUBE_SIZE);
 	double a = (next_x - ray.x ) / ray.vec_x;
 	double b = (next_y - ray.y ) / ray.vec_y;
-	if (a < b)
-	{
-		ray.y += ray.vec_y * a;
-	}
-	else
-	{
-		ray.x += ray.vec_x * b;
-	}
-	//todo:
-	//why do i need to add +1 to both indexes?
-	//can this segfault
-	//behaivior without the +1s:
+	t_ray	start_ray = ray;
 	/*
 		YELLO(-y)
 PINK(-x)		RED(+x)
 		GREEN(+y)
 	*/
-	// red-yellow buggy(now good)
-	// yello-pink clear cut bug (look like off by 1)
-	// pink-green buggy
-	// green-red good
-	while (!world.map[(int)(ray.y / CUBE_SIZE) + 1][(int)(ray.x / CUBE_SIZE) + 1])
+	//double	dist_x = 0;
+	//double	dist_y = 0;
+	//t_ray	base_ray = ray;
+	//while (!world.map[(int)(ray.y / CUBE_SIZE)][(int)(ray.x / CUBE_SIZE) ])
+	//{
+	//	*ret_dist += 1;
+	//	ray.x += ray.vec_x;
+	//	ray.y += ray.vec_y;
+	//	side = RED;
+	//}
+	//ray = base_ray;
+	while (!world.map[(int)(ray.y / CUBE_SIZE)][(int)(ray.x / CUBE_SIZE)])
 	{
-		// ray.x + a * ray.vec_x = ray.x + direct_x
-		// ray.x + a * ray.vec_x = next_x
-		// a = (next_x - ray.x ) / ray.vec_x
-		//double a = (ray.x + direct_x - ray.x) / ray.vec_x;
 		a = (next_x - ray.x ) / ray.vec_x;
 		b = (next_y - ray.y ) / ray.vec_y;
-		//double b = (ray.y + direct_y - ray.y) / ray.vec_y;
-		if (a < b)
+		
+		if (a < b * (1.0 + EPSILON))
 		{
-			ac++;
 			//ray.x += ray.vec_x * a;
 			ray.x = next_x;
 			ray.y += ray.vec_y * a;
 			*ret_dist += a;
 			side = RED;
 		}
-		else if (a > b)
+		else if (b < a * (1.0 + EPSILON))
 		{
-			bc++;
 			ray.x += ray.vec_x * b;
 			ray.y = next_y;
 			//ray.y += ray.vec_y * b;
@@ -79,27 +83,28 @@ PINK(-x)		RED(+x)
 		}
 		else
 		{
-			side = BLUE;
 			ray.x += ray.vec_x * b;
-			ray.y += ray.vec_y * b;
+			ray.y = next_y;
+			//ray.y += ray.vec_y * b;
 			*ret_dist += b;
+			side = WHITE;
 		}
-		next_x = (int)(ray.x + direct_x);
-		next_y = (int)(ray.y + direct_y);
+		next_x = (ray.x + direct_x);
+		next_y = (ray.y + direct_y);
 	}
-
+	double dist_x = (start_ray.x - ray.x);
+	double dist_y = (start_ray.y - ray.y);
+	double check_dist = sqrt(dist_x * dist_x + dist_y * dist_y);
+	assert(fabs(check_dist - *ret_dist) < 0.001);
 	if (side == RED && direct_x < 0)
 		side = PINK;
 	if (side == GREEN && direct_y < 0)
 		side = YELLOW;
 	*color = side;
-	//printf("dist: %lf\n", *ret_dist);
-	//printf("ac: %d; bc: %d; (ac / bc: %lf)\n", ac, bc, (double)ac / bc);
 }
 
 void	draw_ray(t_main *main_data, double wall_dist, int x, uint32_t side)
 {
-	//int projected_size = 1 / wall_dist * Z_NEAR;
 	int projected_size = CUBE_SIZE / wall_dist * Z_NEAR;
 
 	if (projected_size >= HEIGHT)
@@ -150,7 +155,6 @@ void	project(t_main *main_data)
 		else
 		{
 			ray_wall_intersection(ray, &dist, world, &side);
-			//ft_printf("found_wall %d after %d\n", ray_index, dist);
 			draw_ray(main_data, dist, ray_index, side);
 		}
 		ray.direct -= ANGLE_PER_RAY;
@@ -158,6 +162,7 @@ void	project(t_main *main_data)
 	}
 }
 
+// for debugging to check image vs expected output
 void	print_mini_map(t_main *main_data)
 {
 	char	**map_cpy;
@@ -173,7 +178,7 @@ void	print_mini_map(t_main *main_data)
 	char	player = 0;
 	double	direct = main_data->world.player.direct;
 
-	char icons[] = ">/^\\<(v))";
+	char icons[] = ">/^\\<(v)>";
 	const double M_PI_8 = M_PI_4 / 2;
 	double cur = M_PI_8;
 	double last = -M_PI_8;
@@ -185,44 +190,37 @@ void	print_mini_map(t_main *main_data)
 		cur += M_PI_4;
 	}
 	printf("angle: %lf\n", direct / (M_PI * 2) * 360);
-	if (player == '^')
-		printf("YELLOW\n");
-	if (player == '<')
-		printf("PINK\n");
-	if (player == 'v')
-		printf("GREEN\n");
-	if (player == '>')
-		printf("RED\n");
-	if (player == '/')
-		printf("YELLOW/RED\n");
-	if (player == '\\')
-		printf("PINK/YELLOW\n");
-	if (player == '(')
-		printf("GREEN/PINK\n");
-	if (player == ')')
-		printf("RED/GREEN\n");
-	if (!player)
+	printf("\tYELLOW(-y)\nPINK(-x)\tRED(+x)\n\tGREEN(+y)\n");
+	switch (player)
 	{
-		printf("direct: %lf / pi\n", direct / M_PI);
-		exit(1);
+		case ('^'): printf("YELLOW\n"); break;
+		case ('<'): printf("PINK\n"); break;
+		case ('>'): printf("RED\n"); break;
+		case ('v'): printf("GREEN\n"); break;
+		case ('/'): printf("YELLOW/RED\n"); break;
+		case ('\\'): printf("PINK/YELLOW\n"); break;
+		case ('('): printf("GREEN/PINK\n"); break;
+		case (')'): printf("RED/GREEN\n"); break;
+		default: printf("direct: %lf / pi\n", direct / M_PI); exit(1);
 	}
-	//if (direct <= M_PI - M_PI_4 && direct > M_PI_4)
-	//	player = '^';
-	//else if (direct <= M_PI_4 || direct > M_PI * 2 - M_PI_4)
-	//	player = '>';
-	//else if (direct <= M_PI + M_PI_4 && direct > M_PI - M_PI_4)
-	//	player = '<';
-	//else //if (diect <= 2 * M_PI - M_PI_4 && direct > M_PI + M_PI_4)
-	//	 player = 'v';
-	map_cpy[(int)main_data->world.player.y][(int)main_data->world.player.x] = player;
+
+	map_cpy[(int)main_data->world.player.y / CUBE_SIZE][(int)main_data->world.player.x / CUBE_SIZE] = player;
+	printf("player pos: x: %lf; y: %lf\n", main_data->world.player.x / CUBE_SIZE, main_data->world.player.y / CUBE_SIZE);
+	printf("   ");
+	for (int x = 0; x < main_data->world.y_size; x++)
+	{
+		printf("%-2d|", x);
+	}
+	printf("\n");
 	for (int y = 0; y < main_data->world.y_size; y++)
 	{
+		printf("%-2d|", y);
 		for (int x = 0; x < main_data->world.x_size; x++)
 		{
 			if (map_cpy[y][x] > 5)
-				printf("%c", map_cpy[y][x]);
+				printf("%-2c|", map_cpy[y][x]);
 			else
-				printf("%d", map_cpy[y][x]);
+				printf("%-2d|", map_cpy[y][x]);
 		}
 		printf("\n");
 		free((map_cpy)[y]);
@@ -236,15 +234,58 @@ void	ft_loop_hook(void *data)
 
 	main_data = (t_main *)data;
 	ft_memset(main_data->img->pixels, BLACK, WIDTH * HEIGHT * sizeof(uint32_t));
-	project(main_data);
-	main_data->world.player.direct += 0.005;
 	if (main_data->world.player.direct < 0)
 		main_data->world.player.direct = 2 * M_PI + main_data->world.player.direct;
 	if (main_data->world.player.direct > 2 * M_PI)
 		main_data->world.player.direct = main_data->world.player.direct - 2 * M_PI;
+	project(main_data);
+	//main_data->world.player.direct += 0.005;
+	//if (main_data->world.player.direct < 0)
+	//	main_data->world.player.direct = 2 * M_PI + main_data->world.player.direct;
+	//if (main_data->world.player.direct > 2 * M_PI)
+	//	main_data->world.player.direct = main_data->world.player.direct - 2 * M_PI;
 	print_mini_map(main_data);
 }
 
+void	ft_key_hook(mlx_key_data_t keydata, void *data)
+{
+	t_main	*main_data;
+
+	main_data = (t_main *)data;
+	if (keydata.key == MLX_KEY_W)
+	{
+		main_data->world.player.x += cos(main_data->world.player.direct);
+		main_data->world.player.y -= sin(main_data->world.player.direct);
+	}
+	if (keydata.key == MLX_KEY_S)
+	{
+		main_data->world.player.x -= cos(main_data->world.player.direct);
+		main_data->world.player.y += sin(main_data->world.player.direct);
+	}
+	if (keydata.key == MLX_KEY_A)
+	{
+		double	side_direct = main_data->world.player.direct - M_PI_2;
+		main_data->world.player.x -= cos(side_direct);
+		main_data->world.player.y += sin(side_direct);
+	}
+	if (keydata.key == MLX_KEY_D)
+	{
+		double	side_direct = main_data->world.player.direct + M_PI_2;
+		main_data->world.player.x -= cos(side_direct);
+		main_data->world.player.y += sin(side_direct);
+	}
+	if (keydata.key == MLX_KEY_Q)
+	{
+		main_data->world.player.direct += 0.01;
+	}
+	if (keydata.key == MLX_KEY_E)
+	{
+		main_data->world.player.direct -= 0.01;
+	}
+}
+
+
+void mlx_key_hook(mlx_t* mlx, mlx_keyfunc func, void* param);
 int	main(int ac, char *av[])
 {
 	t_main	main_data;
@@ -252,6 +293,7 @@ int	main(int ac, char *av[])
 	printf("hi\n");
 	init_main(&main_data, ac, av);
 	parser(&main_data, ac, av);
+	mlx_key_hook(main_data.mlx, ft_key_hook, &main_data);
 	if (!mlx_loop_hook(main_data.mlx, ft_loop_hook, &main_data))
 		ft_error(&main_data, __FILE__, __LINE__, mlx_strerror(mlx_errno));
 	mlx_loop(main_data.mlx);
