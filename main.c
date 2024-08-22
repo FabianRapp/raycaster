@@ -12,7 +12,8 @@ typedef struct s_ray
 	double		y;
 }	t_ray;
 
-void	ray_wall_intersection_new(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
+
+void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
 {
 	//int	direct_x = CUBE_SIZE;
 	//int	direct_y = CUBE_SIZE;
@@ -66,116 +67,66 @@ void	ray_wall_intersection_new(t_ray ray, double *ret_dist, t_world world, uint3
 	{
 		*ret_dist = a;
 		if (direct_x < 0)
-			*color = PINK;
+			*color = SIDE_LEFT;
 		else
-			*color = RED;
+			*color = SIDE_RIGHT;
 	}
 	else
 	{
 		*ret_dist = b;
 		if (direct_y < 0)
-			*color = YELLOW;
+			*color = SIDE_TOP;
 		else
-			*color = GREEN;
+			*color = SIDE_BOT;
 	}
 }
 
-void	ray_wall_intersection_old(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
-{
-	*ret_dist = 0;
-
-	int	direct_x = CUBE_SIZE;
-	int	direct_y = CUBE_SIZE;
-	if (ray.vec_x < 0)
-		direct_x *= -1;
-	if (ray.vec_y < 0)
-		direct_y *= -1;
-
-	uint32_t	side = 0;
-	//while (((int)ray.x) % CUBE_SIZE || ((int)ray.y) % CUBE_SIZE)
-	//{
-	//	ray.x += ray.vec_x;
-	//	ray.y += ray.vec_y;
-	//	*ret_dist += 1;
-	//}
-
-	double	next_x = (ray.x + direct_x);
-	double	next_y = (ray.y + direct_y);
-	double a = (next_x - ray.x ) / ray.vec_x;
-	double b = (next_y - ray.y ) / ray.vec_y;
-	t_ray	start_ray = ray;
-	/*
-		YELLO(-y)
-PINK(-x)		RED(+x)
-		GREEN(+y)
-	*/
-	//double	dist_x = 0;
-	//double	dist_y = 0;
-	//t_ray	base_ray = ray;
-	//while (!world.map[(int)(ray.y / CUBE_SIZE)][(int)(ray.x / CUBE_SIZE) ])
-	//{
-	//	*ret_dist += 1;
-	//	ray.x += ray.vec_x;
-	//	ray.y += ray.vec_y;
-	//	side = RED;
-	//}
-	//ray = base_ray;
-	while (!world.map[(int)(ray.y / CUBE_SIZE)][(int)(ray.x / CUBE_SIZE)])
-	{
-		a = (next_x - ray.x ) / ray.vec_x;
-		b = (next_y - ray.y ) / ray.vec_y;
-		
-		if (a < b * (1.0 + EPSILON))
-		{
-			//ray.x += ray.vec_x * a;
-			ray.x = next_x;
-			ray.y += ray.vec_y * a;
-			*ret_dist += a;
-			side = RED;
-		}
-		else if (b < a * (1.0 + EPSILON))
-		{
-			ray.x += ray.vec_x * b;
-			ray.y = next_y;
-			//ray.y += ray.vec_y * b;
-			*ret_dist += b;
-			side = GREEN;
-		}
-		else
-		{
-			ray.x += ray.vec_x * b;
-			ray.y = next_y;
-			//ray.y += ray.vec_y * b;
-			*ret_dist += b;
-			side = WHITE;
-		}
-		next_x = (ray.x + direct_x);
-		next_y = (ray.y + direct_y);
-	}
-	double dist_x = (start_ray.x - ray.x);
-	double dist_y = (start_ray.y - ray.y);
-	double check_dist = sqrt(dist_x * dist_x + dist_y * dist_y);
-	assert(fabs(check_dist - *ret_dist) < 0.001);
-	if (side == RED && direct_x < 0)
-		side = PINK;
-	if (side == GREEN && direct_y < 0)
-		side = YELLOW;
-	*color = side;
-}
-
-void	draw_ray(t_main *main_data, double wall_dist, int x, uint32_t side)
+void	draw_ray(t_main *main_data, t_texture texture, double wall_dist,
+		int x, uint32_t side, int hit_x, int hit_y)
 {
 	int projected_size = CUBE_SIZE / wall_dist * Z_NEAR;
-
+	int	texture_y;
+	int	min_texture_y = 0;
+	int	max_texture_y = texture.height - 1;
 	if (projected_size >= HEIGHT)
 	{
+		int	overflow = projected_size - HEIGHT;
+		const double PLAYER_CUBE_RATIO = PLAYER_HEIGHT / (double)CUBE_SIZE;
+		min_texture_y = overflow * (1.0 - PLAYER_CUBE_RATIO);
+		max_texture_y = texture.height - overflow * (PLAYER_CUBE_RATIO);
 		projected_size = HEIGHT;
 	}
+	//currently needed to avoid assert or segault when going through walls
+	if (min_texture_y > max_texture_y)
+		return ;
 	int	y = HEIGHT / 2 - projected_size / 2;
+	double texture_x_progress;
+	if (hit_y % CUBE_SIZE < hit_x % CUBE_SIZE)
+		texture_x_progress = (hit_x % CUBE_SIZE) / ((double)CUBE_SIZE);
+	else
+		texture_x_progress = (hit_y % CUBE_SIZE) / ((double)CUBE_SIZE);
+	int	texture_x = texture.width * texture_x_progress;
+	MLX_ASSERT(max_texture_y >= min_texture_y, "");
 	for (int i = 0; i < projected_size; i++)
 	{
-		((uint32_t *)(main_data->img->pixels))[(y + i) * WIDTH + x] = side;
+		double	progress = i / (double)projected_size;
+		texture_y = min_texture_y + (max_texture_y - min_texture_y) * progress;
+		((uint32_t *)(main_data->img->pixels))[(y + i) * WIDTH + x] = texture.buffer[texture_y * texture.width + texture_x];
 	}
+}
+
+t_texture	mux_texture(t_main *main_data, int8_t sel_side)
+{
+	if (sel_side == SIDE_TOP)
+		return (main_data->texture_top);
+	else if (sel_side == SIDE_LEFT)
+		return (main_data->texture_left);
+	else if (sel_side == SIDE_RIGHT)
+		return (main_data->texture_right);
+	else if (sel_side == SIDE_BOT)
+		return (main_data->texture_bot);
+	else
+		MLX_ASSERT(0, "invalid side for texture selector");
 }
 
 void	project(t_main *main_data)
@@ -215,8 +166,9 @@ void	project(t_main *main_data)
 		else
 		{
 			//ray_wall_intersection_old(ray, &dist, world, &side);
-			ray_wall_intersection_new(ray, &dist, world, &side);
-			draw_ray(main_data, dist, ray_index, side);
+			ray_wall_intersection(ray, &dist, world, &side);
+			t_texture texture = mux_texture(main_data, side);
+			draw_ray(main_data, texture, dist, ray_index, side, ray.vec_x * dist + ray.x, ray.vec_y * dist + ray.y);
 		}
 		ray.direct -= ANGLE_PER_RAY;
 		ray_index++;
@@ -343,6 +295,10 @@ void	ft_key_hook(mlx_key_data_t keydata, void *data)
 	{
 		main_data->world.player.direct -= 0.01;
 	}
+	if (keydata.key == MLX_KEY_ESCAPE)
+	{
+		exit(0);
+	}
 	if (main_data->world.player.x < CUBE_SIZE)
 		main_data->world.player.x = CUBE_SIZE;
 	if (main_data->world.player.y < CUBE_SIZE)
@@ -353,6 +309,50 @@ void	ft_key_hook(mlx_key_data_t keydata, void *data)
 		main_data->world.player.y = (main_data->world.y_size - 1) * (CUBE_SIZE) - 1;
 }
 
+//mlx_load_png() wrapper
+//t_texture.buffer has to be freed
+t_texture	load_png(t_main *main_data, char *path)
+{
+	mlx_texture_t	*mlx_texture;
+	t_texture		texture;
+
+	bzero(&texture, sizeof texture);
+	mlx_texture = mlx_load_png(path);
+	if (!mlx_texture)
+		ft_error(main_data, __FILE__, __LINE__, mlx_strerror(mlx_errno));
+	texture.width = mlx_texture->width;
+	texture.height = mlx_texture->height;
+	texture.buffer = ft_memdup(mlx_texture->pixels, sizeof(uint32_t)
+			* mlx_texture->width * mlx_texture->height);
+	mlx_delete_texture(mlx_texture);
+	if (!texture.buffer)
+		ft_error(main_data, __FILE__, __LINE__, "malloc fail");
+	return (texture);
+}
+
+void	left_right_inverse_texture(t_texture *texture)
+{
+	uint32_t	x;
+	uint32_t	y;
+	uint32_t	swap_x;
+	uint32_t	tmp;
+
+	y = 0;
+	while (y < texture->height)
+	{
+		x = 0;
+		while (x < texture->width / 2)
+		{
+			swap_x = texture->width - 1 - x;
+			tmp = texture->buffer[y * texture->width + x];
+			texture->buffer[y * texture->width + x] =
+				texture->buffer[y * texture->width + swap_x];
+			texture->buffer[y * texture->width + swap_x] = tmp;
+			x++;
+		}
+		y++;
+	}
+}
 
 void mlx_key_hook(mlx_t* mlx, mlx_keyfunc func, void* param);
 int	main(int ac, char *av[])
@@ -365,6 +365,12 @@ int	main(int ac, char *av[])
 	mlx_key_hook(main_data.mlx, ft_key_hook, &main_data);
 	if (!mlx_loop_hook(main_data.mlx, ft_loop_hook, &main_data))
 		ft_error(&main_data, __FILE__, __LINE__, mlx_strerror(mlx_errno));
+	main_data.texture_top = load_png(&main_data, "point_at_mat.png");
+	main_data.texture_bot = load_png(&main_data, "point_at_mat.png");
+	left_right_inverse_texture(&main_data.texture_bot);
+	main_data.texture_left = load_png(&main_data, "pngs/fps_counter/2.png");
+	left_right_inverse_texture(&main_data.texture_left);
+	main_data.texture_right = load_png(&main_data, "pngs/fps_counter/2.png");
 	mlx_loop(main_data.mlx);
 	return (0);
 }
