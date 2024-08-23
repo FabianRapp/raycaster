@@ -26,7 +26,8 @@ SOURCES= \
 	main.c \
 	exit.c \
 	parser.c \
-	init/init.c
+	init/init.c \
+	debug.c
 
 VPATH = includes:MLX42/include/MLX42/:utils:utils/fixed_point:obj_parser:matrix:menu:init
 

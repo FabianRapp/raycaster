@@ -10,6 +10,7 @@
 # include <stdint.h>
 # include <math.h>
 # include "./MLX42/include/MLX42/MLX42.h"
+# include <sys/param.h>
 # include "./MLX42/include/MLX42/MLX42_Int.h"
 
 # include "./libft/libft.h"
@@ -34,7 +35,7 @@
 #define SIDE_LEFT (2)
 #define SIDE_RIGHT (3)
 #define SIDE_BOT (4)
-
+#define SIDE_NONE (5)
 
 # define CUBE_SIZE 256
 # define PLAYER_HEIGHT 128
@@ -43,8 +44,8 @@
 # define Z_NEAR (WIDTH / 2.0 / tanf(FOV / 2))
 # define ANGLE_PER_RAY (FOV / WIDTH)
 
-# define WIDTH 1300
-# define HEIGHT 800
+# define WIDTH 2600
+# define HEIGHT 1300
 
 typedef struct s_player
 {
@@ -91,4 +92,6 @@ void	init_main(t_main *main_data, int ac, char *av[]);
 //parser.c
 void	parser(t_main *main_data, int ac, char *av[]);
 
+// debug.c
+void	print_mini_map(t_main *main_data);
 #endif

@@ -78,7 +78,8 @@ void	parser(t_main *main_data, int ac, char *av[])
 	//			world->map[y][x] = 1;
 	//	}
 	//}
-	world->map[9][3] = 1;
+	world->map[9][3] = 2;
+	//world->map[7][7] = 2;
 	//world->map[3][7] = 1;
 	//world->map[12][6] = 1;
 }
