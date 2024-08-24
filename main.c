@@ -30,13 +30,13 @@ void	determine_checks(void)
 	if (direct_x < 0)
 		x_check = (next_x / CUBE_SIZE );
 	else
-		x_check = (next_x / CUBE_SIZE ) + 1;
+		x_check = (next_x / CUBE_SIZE ) - 1;
 		//x_check = next_x / CUBE_SIZE;
 	if (direct_y < 0)
 		y_check = (next_y / CUBE_SIZE);
 		//y_check = (next_y / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE) / CUBE_SIZE;
 	else
-		y_check = (next_y / CUBE_SIZE) + 1;
+		y_check = (next_y / CUBE_SIZE);
 }
 
 void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
@@ -50,21 +50,24 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 		direct_y *= -1;
 	//int		next_x;// in cube index
 	//int		next_y;// in cube index
+	double a = 0;
+	double b = 0;
 	if (direct_x < 0)
 		next_x = ((int)ray.x / CUBE_SIZE) * CUBE_SIZE;
 	else
+	{
 		next_x = ((int)ray.x) / CUBE_SIZE * CUBE_SIZE;
+		//a -= CUBE_SIZE;
+	}
 	if (direct_y < 0)
 		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE;
 	else
 		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE;
-	double	a;
-	double	b;
 
 	//int	x_check;
 	//int	y_check;
-	a = fabs((next_x - ray.x) / ray.vec_x);
-	b = fabs((next_y - ray.y) / ray.vec_y);
+	a += fabs((next_x - ray.x) / ray.vec_x);
+	b += fabs((next_y - ray.y) / ray.vec_y);
 
 	determine_checks();
 	while (!world.map[y_check][x_check])
@@ -172,7 +175,10 @@ void	draw_ray(t_main *main_data, t_texture texture, double wall_dist,
 	}
 	//currently needed to avoid assert or segault when going through walls
 	if (min_texture_y > max_texture_y)
+	{
+		//printf("min_texture_y: %d; max_texture_y: %d\n", min_texture_y, max_texture_y);
 		return ;
+	}
 	int	y = HEIGHT / 2 - projected_size / 2;
 	double texture_x_progress;
 	if (hit_y % CUBE_SIZE < hit_x % CUBE_SIZE)
@@ -254,7 +260,7 @@ void	project(t_main *main_data)
 		ray.direct -= ANGLE_PER_RAY;
 		ray_index++;
 	}
-	printf("min dist: %lf; max dist: %lf\n", min_dist, max_dist);
+	//printf("min dist: %lf; max dist: %lf\n", min_dist, max_dist);
 }
 
 #define CROSSAIR_THICKNESS 5
@@ -275,7 +281,7 @@ void	ft_loop_hook(void *data)
 	//	main_data->world.player.direct = 2 * M_PI + main_data->world.player.direct;
 	//if (main_data->world.player.direct > 2 * M_PI)
 	//	main_data->world.player.direct = main_data->world.player.direct - 2 * M_PI;
-	//print_mini_map(main_data);
+	print_mini_map(main_data);
 	for (int y = HEIGHT / 2 - CROSSAIR_THICKNESS; y <= HEIGHT / 2 + CROSSAIR_THICKNESS; y++)
 	{
 		for (int x = WIDTH / 2 - WIDTH / 15; x <= WIDTH / 2 + WIDTH / 15; x++)
@@ -299,25 +305,25 @@ void	ft_key_hook(mlx_key_data_t keydata, void *data)
 	main_data = (t_main *)data;
 	if (keydata.key == MLX_KEY_W)
 	{
-		main_data->world.player.x += 10 * cos(main_data->world.player.direct);
-		main_data->world.player.y -= 10 * sin(main_data->world.player.direct);
+		main_data->world.player.x += 30 * cos(main_data->world.player.direct);
+		main_data->world.player.y -= 30 * sin(main_data->world.player.direct);
 	}
 	if (keydata.key == MLX_KEY_S)
 	{
-		main_data->world.player.x -= 10 * cos(main_data->world.player.direct);
-		main_data->world.player.y += 10 * sin(main_data->world.player.direct);
+		main_data->world.player.x -= 30 * cos(main_data->world.player.direct);
+		main_data->world.player.y += 30 * sin(main_data->world.player.direct);
 	}
 	if (keydata.key == MLX_KEY_A)
 	{
 		double	side_direct = main_data->world.player.direct - M_PI_2;
-		main_data->world.player.x -= 10 * cos(side_direct);
-		main_data->world.player.y += 10 * sin(side_direct);
+		main_data->world.player.x -= 30 * cos(side_direct);
+		main_data->world.player.y += 30 * sin(side_direct);
 	}
 	if (keydata.key == MLX_KEY_D)
 	{
 		double	side_direct = main_data->world.player.direct + M_PI_2;
-		main_data->world.player.x -= 10 * cos(side_direct);
-		main_data->world.player.y += 10 * sin(side_direct);
+		main_data->world.player.x -= 30 * cos(side_direct);
+		main_data->world.player.y += 30 * sin(side_direct);
 	}
 	if (keydata.key == MLX_KEY_Q)
 	{
@@ -403,9 +409,9 @@ int	main(int ac, char *av[])
 		ft_error(&main_data, __FILE__, __LINE__, mlx_strerror(mlx_errno));
 	main_data.texture_top = load_png(&main_data, "point_at_mat.png");
 	main_data.texture_bot = load_png(&main_data, "point_at_mat.png");
-	//left_right_inverse_texture(&main_data.texture_bot);
+	left_right_inverse_texture(&main_data.texture_bot);
 	main_data.texture_left = load_png(&main_data, "Desktop.png");
-	//left_right_inverse_texture(&main_data.texture_left);
+	left_right_inverse_texture(&main_data.texture_left);
 	main_data.texture_right = load_png(&main_data, "Desktop.png");
 	mlx_loop(main_data.mlx);
 	return (0);

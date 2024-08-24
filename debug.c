@@ -28,7 +28,7 @@ void	print_mini_map(t_main *main_data)
 		cur += M_PI_4;
 	}
 	printf("angle: %lf\n", direct / (M_PI * 2) * 360);
-	printf("\tYELLOW(-y)\nPINK(-x)\tRED(+x)\n\tGREEN(+y)\n");
+	//printf("\tYELLOW(-y)\nPINK(-x)\tRED(+x)\n\tGREEN(+y)\n");
 	switch (player)
 	{
 		case ('^'): printf("YELLOW\n"); break;
@@ -43,7 +43,7 @@ void	print_mini_map(t_main *main_data)
 	}
 
 	map_cpy[(int)main_data->world.player.y / CUBE_SIZE][(int)main_data->world.player.x / CUBE_SIZE] = player;
-	printf("player pos: x: %lf; y: %lf\n", main_data->world.player.x / CUBE_SIZE, main_data->world.player.y / CUBE_SIZE);
+	printf("player(%c) pos: x: %lf; y: %lf\n", player, main_data->world.player.x / CUBE_SIZE, main_data->world.player.y / CUBE_SIZE);
 	printf("   ");
 	for (int x = 0; x < main_data->world.y_size; x++)
 	{
