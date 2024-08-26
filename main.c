@@ -8,17 +8,17 @@ typedef struct s_ray
 	double	direct;//direction in rad
 	double	vec_x;//direction as 2d unit vec
 	double	vec_y;//diretion as 2d unit vec
-	double		x;
-	double		y;
+	int		x;
+	int		y;
 }	t_ray;
 
 
 void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
 {
-	//int	direct_x = CUBE_SIZE;
-	//int	direct_y = CUBE_SIZE;
-	int	direct_x = 1;
-	int	direct_y = 1;
+	int	direct_x = CUBE_SIZE;
+	int	direct_y = CUBE_SIZE;
+	//int	direct_x = 1;
+	//int	direct_y = 1;
 
 	if (ray.vec_x < 0)
 		direct_x *= -1;
@@ -26,32 +26,42 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 		direct_y *= -1;
 	double	next_x_dist;//in world units
 	double	next_y_dist;//in world units
-	int		next_x;// in cube index
-	int		next_y;// in cube index
+	int		next_x = ((int)ray.x) / CUBE_SIZE * CUBE_SIZE;
+	int		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE;
+	
 	if (direct_x < 0)
 	{
-		next_x = ((int)ray.x) / CUBE_SIZE;
+		next_y = (((int)ray.y) / CUBE_SIZE - 1) * CUBE_SIZE ;
 	}
 	else
 	{
-		next_x = ((int)ray.x) / CUBE_SIZE ;
 	}
 	if (direct_y < 0)
 	{
-		next_y = ((int)ray.y) / CUBE_SIZE;
 	}
 	else
 	{
-		next_y = ((int)ray.y) / CUBE_SIZE ;
+		//next_x = (((int)ray.x) / CUBE_SIZE - 1) * CUBE_SIZE;
 	}
-	double	a;
-	double	b;
-
-	//printf("a: %lf; b: %lf\n", a, b);
-	while (!world.map[next_y][next_x])
+	//next_x = ray.x;
+	//next_y = ray.y;
+	double	a = 0;
+	double	b = 0;
+	double	last_a;
+	double	last_b;
+	char	cell = world.map[next_y / CUBE_SIZE][next_x / CUBE_SIZE];
+	while (!cell)
 	{
-		a = (next_x * CUBE_SIZE - ray.x) / ray.vec_x;
-		b = (next_y * CUBE_SIZE - ray.y) / ray.vec_y;
+		last_a = a;
+		last_b = b;
+		if (fabs(ray.vec_x) > 0.001)
+			a = (next_x - ray.x) / ray.vec_x;
+		else
+			a = 10000000000;
+		if (fabs(ray.vec_y) > 0.001)
+			b = (next_y - ray.y) / ray.vec_y;
+		else
+			b = 100000000000;
 		if (a < b)
 		{
 			next_x += direct_x;
@@ -60,9 +70,20 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 		{
 			next_y += direct_y;
 		}
-		//a = (next_x * CUBE_SIZE - ray.x) / ray.vec_x;
-		//b = (next_y * CUBE_SIZE - ray.y) / ray.vec_y;
+		//if (direct_y < 0)
+		cell = world.map[next_y / CUBE_SIZE][next_x / CUBE_SIZE];
+		//else
+		//	cell = world.map[next_y / CUBE_SIZE - 1][next_x / CUBE_SIZE];
 	}
+
+	//last_a = fabs(last_a);
+	//last_b = fabs(last_b);
+	//if (a < b && direct_x > 0)
+	//	a = (next_x - ray.x) / ray.vec_x;
+	//if (b <= a && direct_y > 0)
+	//	b = (next_y - ray.y) / ray.vec_y;
+	//a = fabs(a);
+	//b = fabs(b);
 	if (a < b)
 	{
 		*ret_dist = a;
@@ -84,7 +105,12 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 void	draw_ray(t_main *main_data, t_texture texture, double wall_dist,
 		int x, uint32_t side, int hit_x, int hit_y)
 {
+	if (wall_dist <= 0.001)
+		return;
+		//printf("%10lf\n", wall_dist);
 	int projected_size = CUBE_SIZE / wall_dist * Z_NEAR;
+	if (wall_dist <= 0.001)
+		printf("projected+size: %d\n", projected_size);
 	int	texture_y;
 	int	min_texture_y = 0;
 	int	max_texture_y = texture.height - 1;
@@ -267,33 +293,42 @@ void	ft_key_hook(mlx_key_data_t keydata, void *data)
 	main_data = (t_main *)data;
 	if (keydata.key == MLX_KEY_W)
 	{
-		main_data->world.player.x += 3 * cos(main_data->world.player.direct);
-		main_data->world.player.y -= 3 * sin(main_data->world.player.direct);
+		main_data->world.player.x += 35 * cos(main_data->world.player.direct);
+		main_data->world.player.y -= 35 * sin(main_data->world.player.direct);
 	}
 	if (keydata.key == MLX_KEY_S)
 	{
-		main_data->world.player.x -= 3 * cos(main_data->world.player.direct);
-		main_data->world.player.y += 3 * sin(main_data->world.player.direct);
+		main_data->world.player.x -= 35 * cos(main_data->world.player.direct);
+		main_data->world.player.y += 35 * sin(main_data->world.player.direct);
 	}
 	if (keydata.key == MLX_KEY_A)
 	{
 		double	side_direct = main_data->world.player.direct - M_PI_2;
-		main_data->world.player.x -= 3 * cos(side_direct);
-		main_data->world.player.y += 3 * sin(side_direct);
+		main_data->world.player.x -= 35 * cos(side_direct);
+		main_data->world.player.y += 35 * sin(side_direct);
 	}
 	if (keydata.key == MLX_KEY_D)
 	{
 		double	side_direct = main_data->world.player.direct + M_PI_2;
-		main_data->world.player.x -= 3 * cos(side_direct);
-		main_data->world.player.y += 3 * sin(side_direct);
+		main_data->world.player.x -= 35 * cos(side_direct);
+		main_data->world.player.y += 35 * sin(side_direct);
 	}
 	if (keydata.key == MLX_KEY_Q)
 	{
-		main_data->world.player.direct += 0.01;
+		main_data->world.player.direct += 0.04;
 	}
 	if (keydata.key == MLX_KEY_E)
 	{
-		main_data->world.player.direct -= 0.01;
+		main_data->world.player.direct -= 0.04;
+	}
+	if (keydata.key == MLX_KEY_R)
+	{
+		main_data->world.player.direct = M_PI_4 * round(main_data->world.player.direct / M_PI_4);
+	}
+	if (keydata.key == MLX_KEY_T)
+	{
+		main_data->world.player.x = round(main_data->world.player.x / (double)CUBE_SIZE) * CUBE_SIZE;
+		main_data->world.player.y = round(main_data->world.player.y / (double)CUBE_SIZE) * CUBE_SIZE;
 	}
 	if (keydata.key == MLX_KEY_ESCAPE)
 	{
@@ -365,12 +400,12 @@ int	main(int ac, char *av[])
 	mlx_key_hook(main_data.mlx, ft_key_hook, &main_data);
 	if (!mlx_loop_hook(main_data.mlx, ft_loop_hook, &main_data))
 		ft_error(&main_data, __FILE__, __LINE__, mlx_strerror(mlx_errno));
-	main_data.texture_top = load_png(&main_data, "point_at_mat.png");
-	main_data.texture_bot = load_png(&main_data, "point_at_mat.png");
+	main_data.texture_top = load_png(&main_data, "pngs/point_at_mat.png");
+	main_data.texture_bot = load_png(&main_data, "pngs/gradient.png");
 	left_right_inverse_texture(&main_data.texture_bot);
-	main_data.texture_left = load_png(&main_data, "pngs/fps_counter/2.png");
+	main_data.texture_left = load_png(&main_data, "pngs/rotating_space_2d.png");
 	left_right_inverse_texture(&main_data.texture_left);
-	main_data.texture_right = load_png(&main_data, "pngs/fps_counter/2.png");
+	main_data.texture_right = load_png(&main_data, "pngs/rotating_space_2d.png");
 	mlx_loop(main_data.mlx);
 	return (0);
 }

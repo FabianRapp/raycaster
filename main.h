@@ -14,6 +14,8 @@
 
 # include "./libft/libft.h"
 
+#define ASSERT(a) do {if (!(a)){printf("%s: %d:\n", __FILE__, __LINE__);assert(a);}} while(0)
+
 #define BLACK 0xFF000000
 #define RED 0xFF0000FF
 #define GREEN 0xFF00FF00
