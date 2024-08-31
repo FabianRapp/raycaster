@@ -28,7 +28,6 @@ log.log
 o_files/*
 .clangd
 *.cache
-compile_commands.json
 a.cpp
 pp
 pn

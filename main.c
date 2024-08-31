@@ -39,6 +39,62 @@ void	determine_checks(void)
 		y_check = (next_y / CUBE_SIZE);
 }
 
+double	next_x_dist(t_ray ray, t_world world, uint32_t *side)
+{
+	double	dist = 0;
+
+	size_t	x_index;
+	size_t	y_index;
+
+	if (ray.vec_y < 0)
+		y_index = (ray.y / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE) / CUBE_SIZE;
+	else
+		y_index = ray.y / CUBE_SIZE;
+	if (ray.vec_x < 0)
+		x_index = (ray.x / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE) / CUBE_SIZE;
+	else
+		x_index = ray.x / CUBE_SIZE;
+	while (world.map[y_index][x_index])
+	{
+	}
+
+}
+
+void	ray_wall_intersection_test(t_ray ray, double *ret_dist, t_world world, uint32_t *side)
+{
+	size_t	x_index;
+	size_t	y_index;
+
+	if (ray.vec_y < 0)
+		y_index = ray.y / CUBE_SIZE ;//(ray.y / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE) / CUBE_SIZE;
+	else
+		y_index = ray.y / CUBE_SIZE;
+	if (ray.vec_x < 0)
+		x_index = ray.x / CUBE_SIZE + 1;//(ray.x / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE) / CUBE_SIZE;
+	else
+		x_index = ray.x / CUBE_SIZE;
+	*ret_dist = 0;
+	printf("x_index: %lu; y_index: %lu\n", x_index, y_index);
+	while (!world.map[y_index][x_index])
+	{
+		ray.x += ray.vec_x;
+		ray.y += ray.vec_y;
+		if (ray.vec_y < 0)
+			y_index = ray.y / CUBE_SIZE;//(ray.y / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE) / CUBE_SIZE;
+		else
+			y_index = ray.y / CUBE_SIZE - 1;
+		if (ray.vec_x < 0)
+			x_index = ray.x / CUBE_SIZE ;//(ray.x / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE) / CUBE_SIZE;
+		else
+			x_index = ray.x / CUBE_SIZE - 1;
+		*ret_dist += 1;
+	}
+
+	printf("after: x_index: %lu; y_index: %lu\n", x_index, y_index);
+	printf("ret_dist: %lf\n", *ret_dist);
+	*side = SIDE_TOP;
+}
+
 void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
 {
 	direct_x = CUBE_SIZE;
@@ -53,16 +109,16 @@ void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t 
 	double a = 0;
 	double b = 0;
 	if (direct_x < 0)
-		next_x = ((int)ray.x / CUBE_SIZE) * CUBE_SIZE;
+		next_x = ((int)ray.x / CUBE_SIZE) * CUBE_SIZE + CUBE_SIZE;
 	else
 	{
-		next_x = ((int)ray.x) / CUBE_SIZE * CUBE_SIZE;
+		next_x = ((int)ray.x) / CUBE_SIZE * CUBE_SIZE ;
 		//a -= CUBE_SIZE;
 	}
 	if (direct_y < 0)
-		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE;
+		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE + CUBE_SIZE;
 	else
-		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE;
+		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE ;
 
 	//int	x_check;
 	//int	y_check;
@@ -305,25 +361,25 @@ void	ft_key_hook(mlx_key_data_t keydata, void *data)
 	main_data = (t_main *)data;
 	if (keydata.key == MLX_KEY_W)
 	{
-		main_data->world.player.x += 30 * cos(main_data->world.player.direct);
-		main_data->world.player.y -= 30 * sin(main_data->world.player.direct);
+		main_data->world.player.x += 10 * cos(main_data->world.player.direct);
+		main_data->world.player.y -= 10 * sin(main_data->world.player.direct);
 	}
 	if (keydata.key == MLX_KEY_S)
 	{
-		main_data->world.player.x -= 30 * cos(main_data->world.player.direct);
-		main_data->world.player.y += 30 * sin(main_data->world.player.direct);
+		main_data->world.player.x -= 10 * cos(main_data->world.player.direct);
+		main_data->world.player.y += 10 * sin(main_data->world.player.direct);
 	}
 	if (keydata.key == MLX_KEY_A)
 	{
 		double	side_direct = main_data->world.player.direct - M_PI_2;
-		main_data->world.player.x -= 30 * cos(side_direct);
-		main_data->world.player.y += 30 * sin(side_direct);
+		main_data->world.player.x -= 10 * cos(side_direct);
+		main_data->world.player.y += 10 * sin(side_direct);
 	}
 	if (keydata.key == MLX_KEY_D)
 	{
 		double	side_direct = main_data->world.player.direct + M_PI_2;
-		main_data->world.player.x -= 30 * cos(side_direct);
-		main_data->world.player.y += 30 * sin(side_direct);
+		main_data->world.player.x -= 10 * cos(side_direct);
+		main_data->world.player.y += 10 * sin(side_direct);
 	}
 	if (keydata.key == MLX_KEY_Q)
 	{
