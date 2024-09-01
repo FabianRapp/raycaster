@@ -3,103 +3,104 @@
 
 #define EPSILON 1e-9
 
+typedef struct s_veci2
+{
+	int	x;
+	int	y;
+}	t_veci2;
+
+typedef struct s_vecf2
+{
+	double	x;
+	double	y;
+}	t_vecf2;
+
+typedef struct s_line
+{
+	t_veci2	p;
+	t_vecf2	direct;
+}	t_line;
 typedef struct s_ray
 {
 	double	direct;//direction in rad
-	double	vec_x;//direction as 2d unit vec
-	double	vec_y;//diretion as 2d unit vec
-	int		x;
-	int		y;
+	t_line	l;
 }	t_ray;
 
+typedef enum e_planes
+{
+	X_PLANE,
+	Y_PLANE,
+}	t_planes;
+
+typedef struct s_intersection
+{
+	t_veci2		p;
+	t_planes	type;
+	double		dist;//from point of given line
+}	t_intersection;
+
+bool	reset = true;
+bool	pmap = true;
+
+//double	ray_x_intersect(t_ray ray, double *ret_dist, t_world world)
+//{
+//	double	dist = 0;
+//
+//	while (!world[ray.y / CUBE_SIZE][ray.x / CUBE_SIZE]
+//	{
+//		ray.x += ray.vec_x;
+//		dist += 1.0;
+//	}
+//}
+//
+//void	ray_wall_intersection2(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
+//{
+//	double	dist_x;
+//	double	dist_y;
+//}
+
+t_intersection	next_plane(t_line line)
+{
+	t_intersection	intersection;
+	t_veci2			x_p;
+	t_veci2			y_p;
+	t_vecf2			dists;
+
+	if (line.direct.x < 0)
+	{
+		x_p.x = line.p.x / CUBE_SIZE * CUBE_SIZE - 1;
+	}
+	else
+	{
+		x_p.x = (line.p.x / CUBE_SIZE + 1) * CUBE_SIZE;
+	}
+	dists.x = (line.p.x - x_p.x) / line.direct.x;
+	if (line.direct.y < 0)
+	{
+		y_p.y = line.p.y / CUBE_SIZE * CUBE_SIZE - 1;
+	}
+	else
+	{
+		y_p.y = (line.p.y / CUBE_SIZE + 1) * CUBE_SIZE;
+	}
+	dists.y = (y_p.y - line.p.y) / line.direct.y;
+	if (dists.y > dists.x)
+	{
+		intersection.dist = dists.y;
+		y_p.x = line.p.x + line.direct.x * dists.y;
+		intersection.p = y_p;
+	}
+	else
+	{
+		intersection.dist = dists.x;
+		x_p.y = line.p.y + line.direct.y * dists.x;
+		intersection.p = x_p;
+	}
+	return (intersection);
+}
 
 void	ray_wall_intersection(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
 {
-	int	direct_x = CUBE_SIZE;
-	int	direct_y = CUBE_SIZE;
-	//int	direct_x = 1;
-	//int	direct_y = 1;
-
-	if (ray.vec_x < 0)
-		direct_x *= -1;
-	if (ray.vec_y < 0)
-		direct_y *= -1;
-	double	next_x_dist;//in world units
-	double	next_y_dist;//in world units
-	int		next_x = ((int)ray.x) / CUBE_SIZE * CUBE_SIZE;
-	int		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE;
-	
-	if (direct_x < 0)
-	{
-		next_y = (((int)ray.y) / CUBE_SIZE - 1) * CUBE_SIZE ;
-	}
-	else
-	{
-	}
-	if (direct_y < 0)
-	{
-	}
-	else
-	{
-		//next_x = (((int)ray.x) / CUBE_SIZE - 1) * CUBE_SIZE;
-	}
-	//next_x = ray.x;
-	//next_y = ray.y;
-	double	a = 0;
-	double	b = 0;
-	double	last_a;
-	double	last_b;
-	char	cell = world.map[next_y / CUBE_SIZE][next_x / CUBE_SIZE];
-	while (!cell)
-	{
-		last_a = a;
-		last_b = b;
-		if (fabs(ray.vec_x) > 0.001)
-			a = (next_x - ray.x) / ray.vec_x;
-		else
-			a = 10000000000;
-		if (fabs(ray.vec_y) > 0.001)
-			b = (next_y - ray.y) / ray.vec_y;
-		else
-			b = 100000000000;
-		if (a < b)
-		{
-			next_x += direct_x;
-		}
-		else
-		{
-			next_y += direct_y;
-		}
-		//if (direct_y < 0)
-		cell = world.map[next_y / CUBE_SIZE][next_x / CUBE_SIZE];
-		//else
-		//	cell = world.map[next_y / CUBE_SIZE - 1][next_x / CUBE_SIZE];
-	}
-
-	//last_a = fabs(last_a);
-	//last_b = fabs(last_b);
-	//if (a < b && direct_x > 0)
-	//	a = (next_x - ray.x) / ray.vec_x;
-	//if (b <= a && direct_y > 0)
-	//	b = (next_y - ray.y) / ray.vec_y;
-	//a = fabs(a);
-	//b = fabs(b);
-	if (a < b)
-	{
-		*ret_dist = a;
-		if (direct_x < 0)
-			*color = SIDE_LEFT;
-		else
-			*color = SIDE_RIGHT;
-	}
-	else
-	{
-		*ret_dist = b;
-		if (direct_y < 0)
-			*color = SIDE_TOP;
-		else
-			*color = SIDE_BOT;
-	}
 }
 
 void	draw_ray(t_main *main_data, t_texture texture, double wall_dist,
@@ -166,8 +167,8 @@ void	project(t_main *main_data)
 	//	ray.direct = 2 * M_PI + ray.direct;
 	//if (ray.direct > 2 * M_PI)
 	//	ray.direct = ray.direct - 2 * M_PI;
-	ray.x = world.player.x;
-	ray.y = world.player.y;
+	ray.l.p.x = world.player.x;
+	ray.l.p.y = world.player.y;
 	ray_index = 0;
 	double	dist;
 	uint32_t side;
@@ -178,21 +179,21 @@ void	project(t_main *main_data)
 		//	ray.direct = 2 * M_PI + ray.direct;
 		//if (ray.direct > 2 * M_PI)
 		//	ray.direct = ray.direct - 2 * M_PI;
-		ray.vec_x = cos(ray.direct);
-		ray.vec_y = -1 * sin(ray.direct);
+		ray.l.direct.x = cos(ray.direct);
+		ray.l.direct.y = sin(ray.direct + M_PI);
 		//printf("direct: %lf; vec_x: %lf; vec_y: %lf\n", ray.direct, ray.vec_x, ray.vec_y);
 		//assert(ray.direct >= 0 && ray.direct < 2 * M_PI);
-		double ray_len = sqrt(ray.vec_x * ray.vec_x + ray.vec_y * ray.vec_y);
+		double ray_len = sqrt(ray.l.direct.x * ray.l.direct.x + ray.l.direct.y * ray.l.direct.y);
 		if (ray_len < 0.98 || ray_len > 1.02)
 		{
 			printf("ray_len: %lf\n", ray_len);
-			printf("vec_x: %lf\nvec_y: %lf\n", ray.vec_x, ray.vec_y);
+			printf("vec_x: %lf\nvec_y: %lf\n", ray.l.direct.x, ray.l.direct.y);
 			assert(0);
 		}
-		else
+		//ray_wall_intersection_old(ray, &dist, world, &side);
+		ray_wall_intersection(ray, &dist, world, &side);
+		if (dist != INFINITY)
 		{
-			//ray_wall_intersection_old(ray, &dist, world, &side);
-			ray_wall_intersection(ray, &dist, world, &side);
 			t_texture texture = mux_texture(main_data, side);
 			draw_ray(main_data, texture, dist, ray_index, side, ray.vec_x * dist + ray.x, ray.vec_y * dist + ray.y);
 		}
@@ -229,6 +230,7 @@ void	print_mini_map(t_main *main_data)
 		cur += M_PI_4;
 	}
 	printf("angle: %lf\n", direct / (M_PI * 2) * 360);
+	printf("vec_x: %lf; vec_y: %lf\n", cos(direct), sin(direct));
 	printf("\tYELLOW(-y)\nPINK(-x)\tRED(+x)\n\tGREEN(+y)\n");
 	switch (player)
 	{
@@ -283,7 +285,8 @@ void	ft_loop_hook(void *data)
 	//	main_data->world.player.direct = 2 * M_PI + main_data->world.player.direct;
 	//if (main_data->world.player.direct > 2 * M_PI)
 	//	main_data->world.player.direct = main_data->world.player.direct - 2 * M_PI;
-	print_mini_map(main_data);
+	if (pmap)
+		print_mini_map(main_data);
 }
 
 void	ft_key_hook(mlx_key_data_t keydata, void *data)
@@ -304,14 +307,22 @@ void	ft_key_hook(mlx_key_data_t keydata, void *data)
 	if (keydata.key == MLX_KEY_A)
 	{
 		double	side_direct = main_data->world.player.direct - M_PI_2;
-		main_data->world.player.x -= 35 * cos(side_direct);
-		main_data->world.player.y += 35 * sin(side_direct);
+		main_data->world.player.x -= 10 * cos(side_direct);
+		main_data->world.player.y += 10 * sin(side_direct);
 	}
 	if (keydata.key == MLX_KEY_D)
 	{
 		double	side_direct = main_data->world.player.direct + M_PI_2;
-		main_data->world.player.x -= 35 * cos(side_direct);
-		main_data->world.player.y += 35 * sin(side_direct);
+		main_data->world.player.x -= 10 * cos(side_direct);
+		main_data->world.player.y += 10 * sin(side_direct);
+	}
+	if (keydata.key == MLX_KEY_V && keydata.action == MLX_PRESS)
+	{
+		reset = true;
+	}
+	if (keydata.key == MLX_KEY_M && keydata.action == MLX_PRESS)
+	{
+		pmap = pmap ? false : true;
 	}
 	if (keydata.key == MLX_KEY_Q)
 	{
@@ -400,12 +411,157 @@ int	main(int ac, char *av[])
 	mlx_key_hook(main_data.mlx, ft_key_hook, &main_data);
 	if (!mlx_loop_hook(main_data.mlx, ft_loop_hook, &main_data))
 		ft_error(&main_data, __FILE__, __LINE__, mlx_strerror(mlx_errno));
-	main_data.texture_top = load_png(&main_data, "pngs/point_at_mat.png");
-	main_data.texture_bot = load_png(&main_data, "pngs/gradient.png");
+	main_data.texture_top = load_png(&main_data, "Desktop.png");
+	main_data.texture_bot = load_png(&main_data, "Desktop.png");
 	left_right_inverse_texture(&main_data.texture_bot);
-	main_data.texture_left = load_png(&main_data, "pngs/rotating_space_2d.png");
+	main_data.texture_left = load_png(&main_data, "point_at_mat.png");
 	left_right_inverse_texture(&main_data.texture_left);
-	main_data.texture_right = load_png(&main_data, "pngs/rotating_space_2d.png");
+	main_data.texture_right = load_png(&main_data, "point_at_mat.png");
 	mlx_loop(main_data.mlx);
 	return (0);
 }
+//void	ray_wall_intersection_old(t_ray ray, double *ret_dist, t_world world, uint32_t *color)
+//{
+//	int	direct_x = CUBE_SIZE;
+//	int	direct_y = CUBE_SIZE;
+//
+//	static int hit_x[WIDTH];
+//	static int hit_y[WIDTH];
+//	if (reset)
+//	{
+//		reset = false;
+//		ft_bzero(hit_x, sizeof hit_x);
+//		ft_bzero(hit_y, sizeof hit_y);
+//	}
+//
+//
+//	//int	direct_x = 1;
+//	//int	direct_y = 1;
+//
+//	if (ray.vec_x < 0)
+//		direct_x *= -1;
+//	if (ray.vec_y < 0)
+//		direct_y *= -1;
+//
+//	char	cell = world.map[ray.y / CUBE_SIZE][ray.x / CUBE_SIZE];
+//	int		next_x = ((int)ray.x) / CUBE_SIZE * CUBE_SIZE;
+//	int		next_y = ((int)ray.y) / CUBE_SIZE * CUBE_SIZE;
+//	
+//	if (direct_x < 0)
+//	{
+//		next_x = (ray.x / CUBE_SIZE) * CUBE_SIZE - 1;
+//	}
+//	else
+//	{
+//		next_x = (ray.x / CUBE_SIZE + 1) * CUBE_SIZE;
+//	}
+//	if (direct_y < 0)
+//	{
+//		next_y = (ray.y / CUBE_SIZE) * CUBE_SIZE - 1;
+//	}
+//	else
+//	{
+//		next_y = (ray.y / CUBE_SIZE + 1) * CUBE_SIZE;
+//		//next_x = (((int)ray.x) / CUBE_SIZE - 1) * CUBE_SIZE;
+//	}
+//	//next_x = ray.x;
+//	//next_y = ray.y;
+//	double	a = 0;
+//	double	b = 0;
+//	if (fabs (ray.vec_x) < 0.0001)
+//		a = INFINITY;
+//	else
+//		a = fabs((next_x - ray.x) / ray.vec_x);
+//	if (fabs (ray.vec_y) < 0.0001)
+//		b = INFINITY;
+//	else
+//		b = fabs((next_y - ray.y) / ray.vec_y);
+//	int		index_x;
+//	int		index_y;
+//	int		ay;
+//	int		bx;
+//
+//	ay = (ray.y + ray.vec_y * a);
+//	bx = ray.x + ray.vec_x * b;
+//
+//	double when_x;
+//
+//
+//	//if (!cell)
+//	//{
+//		//cell = world.map[next_y / CUBE_SIZE][next_x / CUBE_SIZE];
+//		while (!cell)
+//		{
+//			if ((next_x > bx && direct_x < 0) || (direct_x > 0 && next_x < bx))
+//			{
+//				//printf("step x\n");
+//				a = fabs((next_x - ray.x) / ray.vec_x);
+//				index_x = next_x / CUBE_SIZE;
+//				ay = (ray.y + ray.vec_y * a);
+//				index_y = ay / CUBE_SIZE;
+//				next_x += direct_x;
+//			}
+//			else
+//			{
+//				//printf("step y\n");
+//				b = fabs((next_y - ray.y) / ray.vec_y);
+//				index_y = next_y / CUBE_SIZE;
+//				bx = ray.x + ray.vec_x * b;
+//				index_x = bx / CUBE_SIZE;
+//				next_y += direct_y;
+//			}
+//
+//			if (index_y < 0 || index_y >= world.y_size || index_x < 0 || index_x >= world.x_size)
+//			{
+//				*ret_dist = INFINITY;
+//				return ;
+//			}
+//			cell = world.map[index_y][index_x];
+//			//cell = world.map[index_y][index_x];
+//		}
+//		//if (index_x != next_x / CUBE_SIZE || index_y != next_y / CUBE_SIZE)
+//		//{
+//		//	printf("miss: next_x: %d; next_y: %d\n", next_x, next_y);
+//		//	printf("inexs: x: %d; y: %d\n", index_x, index_y);
+//		//}
+//		if (!hit_y[index_y] || !hit_x[index_x])
+//		{
+//			printf("hit x: %d; y: %d\n", index_x, index_y);
+//			hit_y[index_y] = 1;
+//			hit_x[index_x] = 1;
+//		}
+//	//}
+//	//else
+//	//{
+//	//	printf("hit at player position\n");
+//	//}
+//
+//	//a = fabs((next_x - ray.x) / ray.vec_x);
+//	//b = fabs((next_y - ray.y) / ray.vec_y);
+//	//last_a = fabs(last_a);
+//	//last_b = fabs(last_b);
+//	//if (a < b && direct_x > 0)
+//	//	a = (next_x - ray.x) / ray.vec_x;
+//	//if (b <= a && direct_y > 0)
+//	//	b = (next_y - ray.y) / ray.vec_y;
+//	//a = fabs(a);
+//	//b = fabs(b);
+//	if (a < b)
+//	{
+//		*ret_dist = a;
+//		if (direct_x < 0)
+//			*color = SIDE_LEFT;
+//		else
+//			*color = SIDE_RIGHT;
+//	}
+//	else
+//	{
+//		*ret_dist = b;
+//		if (direct_y < 0)
+//			*color = SIDE_TOP;
+//		else
+//			*color = SIDE_BOT;
+//	}
+//}
+
+

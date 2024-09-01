@@ -46,8 +46,8 @@ void	parser(t_main *main_data, int ac, char *av[])
 	world = &main_data->world;
 	//world->x_size = 512;
 	//world->y_size = 512;
-	world->x_size = 8;
-	world->y_size = 8;
+	world->x_size = 16;
+	world->y_size = 16;
 
 	world->map = ft_calloc(sizeof(char *), world->y_size + 1);
 	if (!world->map)
@@ -69,7 +69,7 @@ void	parser(t_main *main_data, int ac, char *av[])
 	world->player.x = world->x_size / 2.2 * CUBE_SIZE;
 	world->player.y = world->y_size / 3.3 * CUBE_SIZE;
 	world->player.direct = M_PI_4;
-	fill_edges(main_data);
+	//fill_edges(main_data);
 	//for (int y = 1; y < world->y_size - 1; y++)
 	//{
 	//	for (int x = 1; x < world->x_size - 1; x++)
@@ -78,7 +78,7 @@ void	parser(t_main *main_data, int ac, char *av[])
 	//			world->map[y][x] = 1;
 	//	}
 	//}
-	world->map[1][3] = 1;
-	//world->map[3][7] = 1;
+	//world->map[1][3] = 1;
+	world->map[3][7] = 1;
 	//world->map[12][6] = 1;
 }

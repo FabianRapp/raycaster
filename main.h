@@ -45,8 +45,8 @@
 # define Z_NEAR (WIDTH / 2.0 / tanf(FOV / 2))
 # define ANGLE_PER_RAY (FOV / WIDTH)
 
-# define WIDTH 1300
-# define HEIGHT 800
+# define WIDTH 2600
+# define HEIGHT 1600
 
 typedef struct s_player
 {
